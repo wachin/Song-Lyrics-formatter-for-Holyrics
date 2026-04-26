@@ -179,7 +179,15 @@ class LyricsFormatterApp(QMainWindow):
         if not text.strip():
             self.statusBar().showMessage("⚠️ Nada que guardar.")
             return
-        path, _ = QFileDialog.getSaveFileName(self, "Guardar como", "letra_arreglada.txt", "Textos (*.txt)")
+
+        default_name = "letra_arreglada.txt"
+        if self.current_file:
+            folder = os.path.dirname(self.current_file)
+            base_name = os.path.basename(self.current_file)
+            name, ext = os.path.splitext(base_name)
+            default_name = os.path.join(folder, f"{name} - fixed{ext or '.txt'}")
+
+        path, _ = QFileDialog.getSaveFileName(self, "Guardar como", default_name, "Textos (*.txt)")
         if path:
             try:
                 with open(path, 'w', encoding='utf-8') as f:
