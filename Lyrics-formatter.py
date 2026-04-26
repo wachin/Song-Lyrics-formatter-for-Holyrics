@@ -1,45 +1,27 @@
+import os
 import sys
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                              QHBoxLayout, QPushButton, QPlainTextEdit, QLabel,
-                             QSpinBox, QFileDialog, QSplitter, QStatusBar)
+                             QSpinBox, QFileDialog, QSplitter, QStatusBar,
+                             QMessageBox)
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont, QDragEnterEvent, QDropEvent
 
-class DropTextEdit(QPlainTextEdit):
-    """QPlainTextEdit que acepta arrastrar y soltar archivos .txt"""
+class CustomPlainTextEdit(QPlainTextEdit):
+    """QPlainTextEdit que deja que la ventana principal gestione archivos soltados."""
     def __init__(self, placeholder="", parent=None):
         super().__init__(parent)
-        self.setAcceptDrops(True)
+        self.setAcceptDrops(False)
         self.setPlaceholderText(placeholder)
         self.setFont(QFont("Segoe UI", 11))
         self.setStyleSheet("QPlainTextEdit { border: 2px dashed #aaa; padding: 8px; background: #f9f9f9; }")
-
-    def dragEnterEvent(self, event: QDragEnterEvent):
-        if event.mimeData().hasUrls():
-            event.acceptProposedAction()
-        else:
-            super().dragEnterEvent(event)
-
-    def dropEvent(self, event: QDropEvent):
-        if event.mimeData().hasUrls():
-            file_path = event.mimeData().urls()[0].toLocalFile()
-            if file_path.lower().endswith('.txt'):
-                try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
-                        self.setPlainText(f.read())
-                    event.acceptProposedAction()
-                except Exception as e:
-                    self.setPlainText(f"❌ Error al leer:\n{e}")
-            else:
-                super().dropEvent(event)
-        else:
-            super().dropEvent(event)
 
 class LyricsFormatterApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Formateador de Letras para Proyector")
         self.resize(1050, 650)
+        self.setAcceptDrops(True)
         self.current_file = None
         self.init_ui()
 
@@ -83,10 +65,11 @@ class LyricsFormatterApp(QMainWindow):
         # ── Área dividida ──
         splitter = QSplitter(Qt.Orientation.Horizontal)
 
-        self.input_edit = DropTextEdit("Arrastra un archivo .txt aquí o pega el texto original...")
+        self.input_edit = CustomPlainTextEdit("Arrastra un archivo .txt aquí o pega el texto original...")
         self.input_edit.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
 
         self.output_edit = QPlainTextEdit()
+        self.output_edit.setAcceptDrops(False)
         self.output_edit.setReadOnly(True)
         self.output_edit.setFont(QFont("Arial", 18, QFont.Weight.Bold))
         self.output_edit.setStyleSheet("QPlainTextEdit { background-color: #000; color: #fff; padding: 10px; }")
@@ -141,6 +124,42 @@ class LyricsFormatterApp(QMainWindow):
 
         return "\n".join(result)
 
+    def open_dropped_file(self, file_path):
+        if not os.path.exists(file_path) or not file_path.lower().endswith('.txt'):
+            QMessageBox.warning(self, "Archivo no válido", "Solo se pueden abrir archivos .txt.")
+            return
+
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                self.input_edit.setPlainText(f.read())
+            self.current_file = file_path
+            self.output_edit.clear()
+            self.statusBar().showMessage(f"📄 Cargado: {file_path}")
+        except Exception as e:
+            QMessageBox.critical(self, "Error al abrir", f"No se pudo abrir el archivo:\n{e}")
+            self.statusBar().showMessage(f"❌ Error: {e}")
+
+    def dragEnterEvent(self, event: QDragEnterEvent):
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+    def dragMoveEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+    def dropEvent(self, event: QDropEvent):
+        if event.mimeData().hasUrls():
+            url = event.mimeData().urls()[0]
+            file_path = url.toLocalFile()
+            self.open_dropped_file(file_path)
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
     def format_text(self):
         raw = self.input_edit.toPlainText()
         if not raw.strip():
@@ -153,13 +172,7 @@ class LyricsFormatterApp(QMainWindow):
     def load_file(self):
         path, _ = QFileDialog.getOpenFileName(self, "Abrir archivo", "", "Textos (*.txt)")
         if path:
-            self.current_file = path
-            try:
-                with open(path, 'r', encoding='utf-8') as f:
-                    self.input_edit.setPlainText(f.read())
-                self.statusBar().showMessage(f"📄 Cargado: {path}")
-            except Exception as e:
-                self.statusBar().showMessage(f"❌ Error: {e}")
+            self.open_dropped_file(path)
 
     def save_file(self):
         text = self.output_edit.toPlainText()
