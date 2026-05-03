@@ -1,0 +1,93 @@
+# itecto
+*.txt
+
+🐍 Python
+
+pycache/
+*.py[cod]
+*$py.class
+
+Distribución / packaging
+
+build/
+dist/
+*.egg-info/
+.eggs/
+
+Entornos virtuales
+
+venv/
+.venv/
+env/
+ENV/
+
+Archivos de configuración locales
+
+.env
+.env
+.env.
+
+Logs
+
+*.log
+
+Archivos temporales
+
+*.tmp
+*.swp
+*~
+*.bak
+
+Archivos generados por el script (letras formateadas)
+
+* - fixed.txt
+
+Archivos de prueba (opcional, puedes comentar si quieres incluirlos)
+
+test/
+tests/
+
+IDEs y editores
+
+VS Code
+
+.vscode/
+
+PyCharm / JetBrains
+
+.idea/
+
+Qt Creator
+
+*.pro.user
+.pro.user.
+
+Sistema operativo
+
+Linux
+
+*~
+
+macOS
+
+.DS_Store
+
+Windows
+
+Thumbs.db
+desktop.ini
+
+Archivos grandes innecesarios
+
+*.zip
+*.tar.gz
+*.rar
+
+Cache de herramientas
+
+.mypy_cache/
+.pytest_cache/
+
+Curses (por si se generan archivos raros de terminal)
+
+*.out
