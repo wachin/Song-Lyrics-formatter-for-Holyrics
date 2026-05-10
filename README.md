@@ -1,165 +1,179 @@
 # Song-Lyrics-formatter-for-Holyrics
-Praise song lyrics formatter for projecting with Holyrics
 
-🎤 Lyrics Formatter (PyQt6 + CLI curses)
+Formateador de letras de canciones pensado para preparar textos que se van a
+proyectar con Holyrics en iglesias, reuniones y presentaciones.
 
-Formateador de letras de canciones optimizado para proyectores (iglesias, presentaciones, etc.).
+El objetivo es que las letras queden faciles de leer en pantalla, sin lineas
+demasiado largas y respetando los comentarios `//` que Holyrics usa para
+separar secciones.
 
-Este proyecto tiene dos versiones:
+## Versiones
 
-- 🖥️ GUI (PyQt6) → Interfaz gráfica fácil de usar
-- 🧑‍💻 CLI (curses) → Interfaz en terminal, ideal para Termux / Linux ligero
+- `Lyrics-formatter.py`: version GUI original con PyQt6.
+- `Lyrics-formatter_v2.py`: version GUI mejorada para bloques de Holyrics.
+- `lyrics_formatter_curses.py`: version de terminal con curses.
 
----
+## Caracteristicas principales
 
-✨ Características
+- Carga archivos `.txt` o permite pegar letras manualmente.
+- Divide automaticamente lineas largas.
+- Mantiene comentarios de Holyrics que empiezan con `//`.
+- Permite guardar el resultado como un nuevo archivo `.txt`.
+- Muestra una vista previa con fondo negro y texto grande.
 
-- Divide automáticamente líneas largas
-- Control por:
-  - número máximo de caracteres
-  - número máximo de palabras
-- Mantiene:
-  - líneas vacías
-  - comentarios tipo "//"
-- Optimizado para lectura en pantalla (proyector)
+## Version GUI mejorada para Holyrics
 
----
+La version recomendada para preparar letras con bloques de Holyrics es:
 
-🖥️ Versión 1: Interfaz Gráfica (PyQt6)
+```bash
+python3 Lyrics-formatter_v2.py
+```
 
-📦 Requisitos
+Esta version agrega una regla especial para los comentarios `//`.
 
-En Debian / MX Linux:
+Si una seccion empieza asi:
 
-sudo apt install python3 python3-pyqt6
+```text
+//Verso I
+Dicen que son pocas y me consta
+Son pocas las que son como tu
+Guerrera genuina y verdadera
+```
 
----
+el programa la convierte en partes:
 
-▶️ Ejecutar
+```text
+//Verso I (Parte 1)
+Dicen que
+son pocas
+y me
+consta
 
+//Verso I (Parte 2)
+Son pocas
+las que
+son como
+tu
+
+//Verso I (Parte 3)
+Guerrera
+genuina y
+verdadera
+```
+
+### Reglas de la version 2
+
+- Cada bloque bajo un comentario `//` tiene maximo 6 lineas de letra.
+- Entre bloque y bloque deja una sola linea vacia, como separador para Holyrics.
+- Si una frase original no cabe en el bloque actual, pasa completa al siguiente
+  bloque aunque el bloque anterior quede con menos de 6 lineas.
+- Esto evita cortes poco naturales como dejar media frase en una parte y la otra
+  mitad en la siguiente.
+- Los comentarios se renombran automaticamente como:
+
+```text
+//Verso I (Parte 1)
+//Verso I (Parte 2)
+//Verso I (Parte 3)
+```
+
+### Controles de la version 2
+
+- `Max. caracteres`: controla el largo maximo aproximado de cada linea.
+- `Max. palabras cortas`: permite juntar varias palabras cortas cuando caben bien.
+- `Formatear`: genera la letra preparada para Holyrics.
+- `Cargar`: abre un archivo `.txt`.
+- `Guardar`: guarda el resultado formateado.
+- `Limpiar`: limpia entrada y salida.
+
+Por defecto, la version 2 usa:
+
+- 10 caracteres maximos por linea.
+- 3 palabras cortas maximas por linea.
+
+Estos valores buscan que la letra no se reduzca demasiado al proyectarse.
+
+## Version GUI original
+
+Para ejecutar la version original:
+
+```bash
 python3 Lyrics-formatter.py
+```
 
----
+Esta version divide las lineas segun:
 
-🧠 Cómo usar
+- maximo de caracteres,
+- maximo de palabras,
+- palabras largas.
 
-1. Cargar archivo ".txt" o pegar texto
-2. Ajustar:
-   - Máx. caracteres
-   - Máx. palabras
-3. Presionar Formatear
-4. Guardar resultado
+Tambien conserva comentarios `//`, pero no crea partes de 6 lineas para
+Holyrics.
 
----
+## Version terminal
 
-🎯 Ideal para
+Para ejecutar la version de terminal:
 
-- Usuarios que prefieren interfaz gráfica
-- Edición visual de letras
-- Preparar canciones rápidamente
+```bash
+python3 lyrics_formatter_curses.py
+```
 
----
+Abrir en una carpeta especifica:
 
-🧑‍💻 Versión 2: Terminal (CLI con curses)
+```bash
+python3 lyrics_formatter_curses.py /ruta/a/carpeta
+```
 
-Perfecta para:
+### Controles
 
-- 📱 Termux (Android)
-- 💻 Sistemas ligeros
-- ⚡ Usuarios avanzados
+```text
+Arriba / Abajo   mover seleccion
+Enter            abrir carpeta / seleccionar archivo
+Backspace        subir carpeta
+c / C            bajar/subir caracteres
+w / W            bajar/subir palabras
+h                ayuda
+q                salir
+```
 
----
+## Requisitos
 
-📦 Requisitos
+En Debian, Ubuntu, MX Linux o derivados:
 
-En Debian / MX Linux:
+```bash
+sudo apt install python3 python3-pyqt6
+```
 
+Para la version de terminal solo se necesita Python 3:
+
+```bash
 sudo apt install python3
+```
 
 En Termux:
 
+```bash
 pkg install python
+```
 
----
+## Estructura del proyecto
 
-▶️ Ejecutar
-
-python3 lyrics_formatter_curses.py
-
-Abrir en una carpeta específica:
-
-python3 lyrics_formatter_curses.py /ruta/a/carpeta
-
----
-
-🎮 Controles
-
-↑ / ↓      mover selección
-Enter      abrir carpeta / seleccionar archivo
-Backspace  subir carpeta
-c / C      bajar/subir caracteres
-w / W      bajar/subir palabras
-h          ayuda
-q          salir
-
----
-
-⚙️ Funcionamiento
-
-1. Navegas por carpetas
-2. Seleccionas un archivo ".txt"
-3. El programa lo formatea automáticamente
-4. Se guarda como:
-
-nombre - fixed.txt
-
----
-
-🧪 Ejemplo
-
-Entrada:
-
-Este es mi deseo honrarte a ti con todo mi ser te adoro a ti
-
-Salida:
-
-Este es mi
-deseo honrarte
-a ti con todo
-mi ser te
-adoro a ti
-
----
-
-🧠 Lógica del algoritmo
-
-El formateo se basa en:
-
-- Máximo de caracteres por línea
-- Máximo de palabras por línea
-- Evita juntar palabras largas
-- Respeta saltos importantes
-
----
-
-📁 Estructura del proyecto
-
+```text
 .
-├── Lyrics-formatter.py        # Versión GUI (PyQt6)
-├── lyrics_formatter_curses.py # Versión CLI (curses)
+├── Lyrics-formatter.py        # GUI original
+├── Lyrics-formatter_v2.py     # GUI mejorada para bloques de Holyrics
+├── lyrics_formatter_curses.py # Version CLI con curses
 ├── README.md
+```
 
----
-
-🙌 Autor
+## Autor
 
 Washington Indacochea Delgado
 
-Proyecto pensado para uso práctico en iglesias y músicos.
+Proyecto pensado para uso practico en iglesias y musicos.
 
----
+## Licencia
 
-📜 Licencia
+GPL 3
 
-GPL 3 
-Libre uso y modificación 👍
+Libre uso y modificacion.

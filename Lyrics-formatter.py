@@ -35,13 +35,13 @@ class LyricsFormatterApp(QMainWindow):
         ctrl_layout.addWidget(QLabel("Máx. caracteres:"))
         self.spin_chars = QSpinBox()
         self.spin_chars.setRange(10, 30)
-        self.spin_chars.setValue(15)  # Valor que mejor coincide con tu archivo "arreglado"
+        self.spin_chars.setValue(10)
         ctrl_layout.addWidget(self.spin_chars)
 
-        ctrl_layout.addWidget(QLabel("Máx. palabras:"))
+        ctrl_layout.addWidget(QLabel("Máx. palabras cortas:"))
         self.spin_words = QSpinBox()
-        self.spin_words.setRange(1, 4)
-        self.spin_words.setValue(2)   # Tu archivo usa mayoritariamente 2 palabras/línea
+        self.spin_words.setRange(1, 5)
+        self.spin_words.setValue(3)
         ctrl_layout.addWidget(self.spin_words)
 
         self.btn_format = QPushButton("🔹 Formatear")
@@ -82,45 +82,125 @@ class LyricsFormatterApp(QMainWindow):
 
         self.statusBar().showMessage("✅ Listo. Arrastra un archivo o usa los botones.")
 
+    def format_line(self, line: str, max_chars: int, max_words: int) -> list[str]:
+        words = line.strip().split()
+        if not words:
+            return [""]
+
+        formatted_lines = []
+        current_words = []
+        current_len = 0
+        connector_words = {"y", "e", "o", "u"}
+
+        for index, word in enumerate(words):
+            w_len = len(word)
+            space = 1 if current_words else 0
+            total = current_len + space + w_len
+            has_next_word = index < len(words) - 1
+
+            exceeds_chars = total > max_chars
+            exceeds_words = len(current_words) >= max_words
+            long_word_with_company = current_words and w_len > 7
+            line_would_end_with_connector = (
+                has_next_word
+                and current_words
+                and word.lower() in connector_words
+                and total >= max_chars
+            )
+
+            if exceeds_chars or exceeds_words or long_word_with_company or line_would_end_with_connector:
+                formatted_lines.append(" ".join(current_words))
+                current_words = [word]
+                current_len = w_len
+            else:
+                current_words.append(word)
+                current_len = total
+
+        if current_words:
+            formatted_lines.append(" ".join(current_words))
+
+        return formatted_lines
+
+    def add_section(self, result: list[str], comment: str | None, lyric_groups: list[list[str]]):
+        if not lyric_groups:
+            if comment:
+                result.append(comment)
+            return
+
+        if not comment:
+            for group in lyric_groups:
+                result.extend(group)
+            return
+
+        clean_comment = comment
+        for part in range(1, 1000):
+            marker = f" (Parte {part})"
+            if clean_comment.endswith(marker):
+                clean_comment = clean_comment[:-len(marker)]
+                break
+
+        parts = []
+        current_part = []
+        current_line_count = 0
+
+        for group in lyric_groups:
+            if not group:
+                continue
+
+            if len(group) > 6:
+                if current_part:
+                    parts.append(current_part)
+                    current_part = []
+                    current_line_count = 0
+
+                for start in range(0, len(group), 6):
+                    parts.append(group[start:start + 6])
+                continue
+
+            if current_part and current_line_count + len(group) > 6:
+                parts.append(current_part)
+                current_part = []
+                current_line_count = 0
+
+            current_part.extend(group)
+            current_line_count += len(group)
+
+        if current_part:
+            parts.append(current_part)
+
+        for index, part_lines in enumerate(parts, start=1):
+            if index > 1:
+                result.append("")
+
+            result.append(f"{clean_comment} (Parte {index})")
+            result.extend(part_lines)
+
     def format_lyrics(self, text: str, max_chars: int, max_words: int) -> str:
         lines = text.splitlines()
         result = []
+        current_comment = None
+        current_lyrics = []
 
         for line in lines:
             stripped = line.strip()
-            # 1. Conservar etiquetas // y líneas vacías
-            if stripped.startswith("//") or not stripped:
-                result.append(line)
+
+            if stripped.startswith("//"):
+                self.add_section(result, current_comment, current_lyrics)
+                current_comment = stripped
+                current_lyrics = []
                 continue
 
-            words = stripped.split()
-            if not words:
-                result.append("")
+            if not stripped:
+                self.add_section(result, current_comment, current_lyrics)
+                current_comment = None
+                current_lyrics = []
+                if result and result[-1] != "":
+                    result.append("")
                 continue
 
-            current_words = []
-            current_len = 0
+            current_lyrics.append(self.format_line(stripped, max_chars, max_words))
 
-            for word in words:
-                w_len = len(word)
-                space = 1 if current_words else 0
-                total = current_len + space + w_len
-
-                # Reglas de salto
-                exceeds_chars = total > max_chars
-                exceeds_words = len(current_words) >= max_words
-                force_break = len(current_words) > 0 and w_len > 8  # Evita palabras largas acompañadas
-
-                if exceeds_chars or exceeds_words or force_break:
-                    result.append(" ".join(current_words))
-                    current_words = [word]
-                    current_len = w_len
-                else:
-                    current_words.append(word)
-                    current_len = total
-
-            if current_words:
-                result.append(" ".join(current_words))
+        self.add_section(result, current_comment, current_lyrics)
 
         return "\n".join(result)
 
