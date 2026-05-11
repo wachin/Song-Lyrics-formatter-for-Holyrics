@@ -1,161 +1,164 @@
 # Song-Lyrics-formatter-for-Holyrics
 
-Formateador de letras de canciones pensado para preparar textos que se van a
-proyectar con Holyrics en iglesias, reuniones y presentaciones.
+**Español:** si prefieres leer esta documentación en español, abre
+[README_ES.md](README_ES.md).
 
-El programa ayuda a que las letras queden faciles de leer en pantalla: divide
-lineas largas, respeta los comentarios `//` de Holyrics y crea bloques cortos
-para que el texto no se reduzca demasiado al proyectarse.
+Song lyrics formatter designed to prepare text files for projection with
+Holyrics in churches, meetings, and presentations.
 
-## Scripts incluidos
+The program helps lyrics stay easy to read on screen: it splits long lines,
+respects Holyrics `//` comments, and creates short blocks so projected text does
+not become too small.
 
-Este repositorio tiene dos versiones del mismo formateador:
+## Included Scripts
 
-- `Lyrics_formatter.py`: version con interfaz grafica, hecha con PyQt6.
-- `lyrics_formatter_curses.py`: version para terminal, hecha con curses.
+This repository includes two versions of the same formatter:
 
-Ambas versiones usan la misma logica de formateo.
+- `Lyrics_formatter.py`: graphical version built with PyQt6.
+- `lyrics_formatter_curses.py`: terminal version built with curses.
 
-## Que hace el formateador
+Both versions use the same formatting logic.
 
-- Lee letras desde archivos `.txt`.
-- Tambien permite pegar texto manualmente en la version GUI.
-- Divide frases largas en lineas cortas.
-- Mantiene los comentarios de Holyrics que empiezan con `//`.
-- Crea partes automaticamente cuando una seccion supera 6 lineas.
-- Deja una sola linea vacia entre bloques, como separador para Holyrics.
-- Guarda el resultado como un nuevo archivo `.txt`.
+## What The Formatter Does
 
-## Regla para Holyrics
+- Reads lyrics from `.txt` files.
+- Also allows manual text input in the GUI version.
+- Splits long phrases into short lines.
+- Keeps Holyrics comments that start with `//`.
+- Automatically creates parts when a section goes over 6 lines.
+- Leaves exactly one blank line between blocks, as a separator for Holyrics.
+- Saves the result as a new `.txt` file.
 
-Holyrics usa comentarios como este para separar secciones:
+## Holyrics Rule
 
-```text
-//Verso I
-Dicen que son pocas y me consta
-Son pocas las que son como tu
-Guerrera genuina y verdadera
-```
-
-El formateador convierte esa seccion en partes:
+Holyrics uses comments like this to separate sections:
 
 ```text
-//Verso I (Parte 1)
-Dicen que
-son pocas
-y me
-consta
-
-//Verso I (Parte 2)
-Son pocas
-las que
-son como
-tu
-
-//Verso I (Parte 3)
-Guerrera
-genuina y
-verdadera
+//Verse I
+They say there are few and I know it
+Few are like you
+Genuine and true warrior
 ```
 
-Cada parte tiene maximo 6 lineas de letra. Si una frase original no cabe en el
-bloque actual, pasa completa al siguiente bloque aunque el bloque anterior quede
-con menos de 6 lineas. Esto evita cortes poco naturales de una misma idea.
+The formatter converts that section into parts:
 
-## Version GUI
+```text
+//Verse I (Parte 1)
+They say
+there are
+few and
+I know it
 
-La version grafica es la mas comoda para trabajar visualmente:
+//Verse I (Parte 2)
+Few are
+like you
+
+//Verse I (Parte 3)
+Genuine
+and true
+warrior
+```
+
+Each part contains up to 6 lyric lines. If an original phrase does not fit in
+the current block, it is moved complete to the next block, even if the previous
+block ends with fewer than 6 lines. This avoids unnatural cuts inside the same
+idea.
+
+## GUI Version
+
+The graphical version is the most comfortable option for visual editing:
 
 ```bash
 python3 Lyrics_formatter.py
 ```
 
-Permite:
+It can:
 
-- cargar archivos `.txt`,
-- arrastrar y soltar archivos,
-- pegar letras manualmente,
-- ver el resultado en una vista previa con fondo negro,
-- ajustar caracteres maximos por linea,
-- ajustar palabras cortas maximas por linea,
-- guardar el resultado formateado.
+- load `.txt` files,
+- drag and drop files,
+- paste lyrics manually,
+- preview the result with a black background,
+- adjust maximum characters per line,
+- adjust maximum short words per line,
+- save the formatted result.
 
-Requisito en Debian, Ubuntu, MX Linux o derivados:
+Requirement on Debian, Ubuntu, MX Linux, or derivatives:
 
 ```bash
 sudo apt install python3 python3-pyqt6
 ```
 
-## Version terminal
+## Terminal Version
 
-La version de terminal es util para Termux, servidores, equipos ligeros o cuando
-se prefiere trabajar sin entorno grafico:
+The terminal version is useful for Termux, servers, lightweight systems, or
+working without a graphical desktop:
 
 ```bash
 python3 lyrics_formatter_curses.py
 ```
 
-Tambien puedes abrir una carpeta especifica:
+You can also open a specific folder:
 
 ```bash
-python3 lyrics_formatter_curses.py /ruta/a/carpeta
+python3 lyrics_formatter_curses.py /path/to/folder
 ```
 
-Al seleccionar un archivo `.txt`, se guarda una copia formateada con este nombre:
+When you select a `.txt` file, it saves a formatted copy using this name:
 
 ```text
-nombre - fixed.txt
+name - fixed.txt
 ```
 
-### Controles
+### Controls
 
 ```text
-Arriba / Abajo   mover seleccion
-Enter            abrir carpeta / seleccionar archivo
-Backspace        subir carpeta
-c / C            bajar/subir caracteres
-w / W            bajar/subir palabras cortas
-h                ayuda
-q                salir
+Up / Down      move selection
+Enter          open folder / select file
+Backspace      go to parent folder
+c / C          decrease/increase characters
+w / W          decrease/increase short words
+h              help
+q              quit
 ```
 
-Requisito:
+Requirement:
 
 ```bash
 sudo apt install python3
 ```
 
-En Termux:
+On Termux:
 
 ```bash
 pkg install python
 ```
 
-## Valores por defecto
+## Default Values
 
-Ambas versiones empiezan con estos valores:
+Both versions start with these values:
 
-- 10 caracteres maximos por linea.
-- 3 palabras cortas maximas por linea.
-- 6 lineas maximas por bloque bajo cada comentario `//`.
+- 10 maximum characters per line.
+- 3 maximum short words per line.
+- 6 maximum lyric lines per block under each `//` comment.
 
-## Estructura del proyecto
+## Project Structure
 
 ```text
 .
-├── Lyrics_formatter.py        # Version GUI con PyQt6
-├── lyrics_formatter_curses.py # Version terminal con curses
-├── README.md
+├── Lyrics_formatter.py        # GUI version with PyQt6
+├── lyrics_formatter_curses.py # Terminal version with curses
+├── README.md                  # English documentation
+├── README_ES.md               # Spanish documentation
 ```
 
-## Autor
+## Author
 
 Washington Indacochea Delgado
 
-Proyecto pensado para uso practico en iglesias y musicos.
+Project designed for practical use in churches and by musicians.
 
-## Licencia
+## License
 
 GPL 3
 
-Libre uso y modificacion.
+Free to use and modify.
