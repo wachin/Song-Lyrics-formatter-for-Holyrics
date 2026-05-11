@@ -3,9 +3,9 @@ import sys
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                              QHBoxLayout, QPushButton, QPlainTextEdit, QLabel,
                              QSpinBox, QFileDialog, QSplitter, QStatusBar,
-                             QMessageBox)
+                             QMessageBox, QDialog, QDialogButtonBox)
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont, QDragEnterEvent, QDropEvent, QIcon
+from PyQt6.QtGui import QFont, QDragEnterEvent, QDropEvent, QIcon, QPixmap
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 APP_ICON_PATH = os.path.join(BASE_DIR, "assets", "icons", "holyrics-lyrics-formatter.svg")
@@ -62,7 +62,10 @@ class LyricsFormatterApp(QMainWindow):
         self.btn_clear = QPushButton("🗑️ Limpiar")
         self.btn_clear.clicked.connect(self.clear_all)
 
-        for btn in [self.btn_load, self.btn_format, self.btn_save, self.btn_clear]:
+        self.btn_about = QPushButton("ℹ️ Acerca de")
+        self.btn_about.clicked.connect(self.show_about_dialog)
+
+        for btn in [self.btn_load, self.btn_format, self.btn_save, self.btn_clear, self.btn_about]:
             ctrl_layout.addWidget(btn)
         ctrl_layout.addStretch()
         main_layout.addLayout(ctrl_layout)
@@ -86,6 +89,72 @@ class LyricsFormatterApp(QMainWindow):
         main_layout.addWidget(splitter)
 
         self.statusBar().showMessage("✅ Listo. Arrastra un archivo o usa los botones.")
+
+    def show_about_dialog(self):
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Acerca de Song Lyrics Formatter")
+        if os.path.exists(APP_ICON_PATH):
+            dialog.setWindowIcon(QIcon(APP_ICON_PATH))
+        dialog.setModal(True)
+        dialog.resize(600, 340)
+        dialog.setMinimumSize(560, 320)
+
+        layout = QHBoxLayout(dialog)
+        layout.setContentsMargins(22, 22, 22, 18)
+        layout.setSpacing(18)
+
+        icon_label = QLabel()
+        icon_label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
+        if os.path.exists(APP_ICON_PATH):
+            pixmap = QPixmap(APP_ICON_PATH)
+            icon_label.setPixmap(
+                pixmap.scaled(
+                    96,
+                    96,
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation,
+                )
+            )
+        icon_label.setFixedWidth(112)
+        layout.addWidget(icon_label)
+
+        content_layout = QVBoxLayout()
+        title = QLabel("Song Lyrics Formatter for Holyrics")
+        title.setFont(QFont("Segoe UI", 14, QFont.Weight.Bold))
+        content_layout.addWidget(title)
+
+        info = QLabel(
+            """
+            <p><b>Autor:</b><br>
+            Washington Indacochea Delgado<br>
+            <a href="mailto:linuxfrontier@proton.me">linuxfrontier@proton.me</a></p>
+
+            <p><b>Página web:</b><br>
+            <a href="https://github.com/wachin/Song-Lyrics-formatter-for-Holyrics">
+            https://github.com/wachin/Song-Lyrics-formatter-for-Holyrics
+            </a></p>
+
+            <p><b>Tecnología usada:</b><br>
+            Python 3 y PyQt6 para la interfaz gráfica.</p>
+
+            <p><b>Descripción:</b><br>
+            Herramienta para preparar letras de canciones para Holyrics,
+            dividiendo frases largas en líneas legibles y creando bloques
+            de hasta 6 líneas bajo comentarios <code>//</code>.</p>
+            """
+        )
+        info.setTextFormat(Qt.TextFormat.RichText)
+        info.setOpenExternalLinks(True)
+        info.setWordWrap(True)
+        content_layout.addWidget(info)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
+        buttons.accepted.connect(dialog.accept)
+        content_layout.addStretch()
+        content_layout.addWidget(buttons)
+
+        layout.addLayout(content_layout)
+        dialog.exec()
 
     def format_line(self, line: str, max_chars: int, max_words: int) -> list[str]:
         words = line.strip().split()
