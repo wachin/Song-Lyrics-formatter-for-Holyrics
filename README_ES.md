@@ -145,6 +145,7 @@ Ambas versiones empiezan con estos valores:
 .
 ├── Lyrics_formatter.py        # Version GUI con PyQt6
 ├── lyrics_formatter_curses.py # Version terminal con curses
+├── assets/icons/              # Icono de la aplicacion
 ├── README.md
 ```
 

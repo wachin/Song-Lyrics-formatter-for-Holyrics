@@ -5,7 +5,10 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                              QSpinBox, QFileDialog, QSplitter, QStatusBar,
                              QMessageBox)
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont, QDragEnterEvent, QDropEvent
+from PyQt6.QtGui import QFont, QDragEnterEvent, QDropEvent, QIcon
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+APP_ICON_PATH = os.path.join(BASE_DIR, "assets", "icons", "holyrics-lyrics-formatter.svg")
 
 class CustomPlainTextEdit(QPlainTextEdit):
     """QPlainTextEdit que deja que la ventana principal gestione archivos soltados."""
@@ -20,6 +23,8 @@ class LyricsFormatterApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Formateador de Letras para Proyector")
+        if os.path.exists(APP_ICON_PATH):
+            self.setWindowIcon(QIcon(APP_ICON_PATH))
         self.resize(1050, 650)
         self.setAcceptDrops(True)
         self.current_file = None
