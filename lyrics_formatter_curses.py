@@ -11,7 +11,7 @@ Controles principales:
   Enter        Entrar a carpeta o seleccionar archivo .txt
   Backspace    Subir a la carpeta anterior
   c / C        Cambiar máximo de caracteres por línea
-  w / W        Cambiar máximo de palabras por línea
+  w / W        Cambiar máximo de palabras cortas por línea
   h            Ayuda
   q            Salir
 
@@ -28,15 +28,15 @@ import curses
 import os
 import sys
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 
-DEFAULT_MAX_CHARS = 15
-DEFAULT_MAX_WORDS = 2
+DEFAULT_MAX_CHARS = 10
+DEFAULT_MAX_WORDS = 3
 MIN_CHARS = 10
 MAX_CHARS = 30
 MIN_WORDS = 1
-MAX_WORDS = 4
+MAX_WORDS = 5
 
 
 class AppState:
@@ -50,55 +50,136 @@ class AppState:
         self.running = True
 
 
+def format_line(line: str, max_chars: int, max_words: int) -> list[str]:
+    """Divide una frase en líneas cortas para que se lea mejor al proyectarse."""
+    words = line.strip().split()
+    if not words:
+        return [""]
+
+    formatted_lines: list[str] = []
+    current_words: list[str] = []
+    current_len = 0
+    connector_words = {"y", "e", "o", "u"}
+
+    for index, word in enumerate(words):
+        word_len = len(word)
+        space = 1 if current_words else 0
+        total = current_len + space + word_len
+        has_next_word = index < len(words) - 1
+
+        exceeds_chars = total > max_chars
+        exceeds_words = len(current_words) >= max_words
+        long_word_with_company = bool(current_words) and word_len > 7
+        line_would_end_with_connector = (
+            has_next_word
+            and bool(current_words)
+            and word.lower() in connector_words
+            and total >= max_chars
+        )
+
+        if exceeds_chars or exceeds_words or long_word_with_company or line_would_end_with_connector:
+            formatted_lines.append(" ".join(current_words))
+            current_words = [word]
+            current_len = word_len
+        else:
+            current_words.append(word)
+            current_len = total
+
+    if current_words:
+        formatted_lines.append(" ".join(current_words))
+
+    return formatted_lines
+
+
+def add_section(result: list[str], comment: Optional[str], lyric_groups: list[list[str]]) -> None:
+    """Agrega una sección en partes de máximo 6 líneas bajo cada comentario //."""
+    if not lyric_groups:
+        if comment:
+            result.append(comment)
+        return
+
+    if not comment:
+        for group in lyric_groups:
+            result.extend(group)
+        return
+
+    clean_comment = comment
+    for part in range(1, 1000):
+        marker = f" (Parte {part})"
+        if clean_comment.endswith(marker):
+            clean_comment = clean_comment[:-len(marker)]
+            break
+
+    parts: list[list[str]] = []
+    current_part: list[str] = []
+    current_line_count = 0
+
+    for group in lyric_groups:
+        if not group:
+            continue
+
+        if len(group) > 6:
+            if current_part:
+                parts.append(current_part)
+                current_part = []
+                current_line_count = 0
+
+            for start in range(0, len(group), 6):
+                parts.append(group[start:start + 6])
+            continue
+
+        if current_part and current_line_count + len(group) > 6:
+            parts.append(current_part)
+            current_part = []
+            current_line_count = 0
+
+        current_part.extend(group)
+        current_line_count += len(group)
+
+    if current_part:
+        parts.append(current_part)
+
+    for index, part_lines in enumerate(parts, start=1):
+        if index > 1:
+            result.append("")
+
+        result.append(f"{clean_comment} (Parte {index})")
+        result.extend(part_lines)
+
+
 def format_lyrics(text: str, max_chars: int = DEFAULT_MAX_CHARS, max_words: int = DEFAULT_MAX_WORDS) -> str:
     """
-    Formatea letras dividiendo cada línea en líneas más cortas.
-
-    Reglas heredadas de la versión gráfica:
-    - Conserva líneas vacías.
-    - Conserva líneas que empiezan con //.
-    - Divide según máximo de caracteres.
-    - Divide según máximo de palabras.
-    - Si una palabra tiene más de 8 caracteres, evita acompañarla con otras
-      palabras en la misma línea cuando ya existe contenido acumulado.
+    Formatea letras con la misma lógica de la versión gráfica:
+    - Divide frases en líneas cortas.
+    - Mantiene juntas las frases originales cuando caben en el bloque.
+    - Cada comentario // genera partes de máximo 6 líneas de letra.
+    - Entre parte y parte deja una sola línea vacía para Holyrics.
     """
     lines = text.splitlines()
     result: list[str] = []
+    current_comment: Optional[str] = None
+    current_lyrics: list[list[str]] = []
 
     for line in lines:
         stripped = line.strip()
 
-        if stripped.startswith("//") or not stripped:
-            result.append(line)
+        if stripped.startswith("//"):
+            add_section(result, current_comment, current_lyrics)
+            current_comment = stripped
+            current_lyrics = []
             continue
 
-        words = stripped.split()
-        if not words:
-            result.append("")
+        if not stripped:
+            add_section(result, current_comment, current_lyrics)
+            current_comment = None
+            current_lyrics = []
+            if result and result[-1] != "":
+                result.append("")
             continue
 
-        current_words: list[str] = []
-        current_len = 0
+        current_lyrics.append(format_line(stripped, max_chars, max_words))
 
-        for word in words:
-            word_len = len(word)
-            space = 1 if current_words else 0
-            total = current_len + space + word_len
-
-            exceeds_chars = total > max_chars
-            exceeds_words = len(current_words) >= max_words
-            force_break = len(current_words) > 0 and word_len > 8
-
-            if exceeds_chars or exceeds_words or force_break:
-                result.append(" ".join(current_words))
-                current_words = [word]
-                current_len = word_len
-            else:
-                current_words.append(word)
-                current_len = total
-
-        if current_words:
-            result.append(" ".join(current_words))
+    add_section(result, current_comment, current_lyrics)
 
     return "\n".join(result)
 
@@ -209,7 +290,7 @@ def show_help(stdscr: curses.window) -> None:
             "  Enter: abrir carpeta o formatear archivo",
             "  Backspace: subir carpeta",
             "  c / C: bajar/subir máximo de caracteres",
-            "  w / W: bajar/subir máximo de palabras",
+            "  w / W: bajar/subir máximo de palabras cortas",
             "  h: ayuda",
             "  q: salir",
         ],
@@ -227,7 +308,7 @@ def process_txt_file(stdscr: curses.window, path: Path, state: AppState) -> None
             f"Salida:  {output_path}",
             "",
             f"Max. caracteres: {state.max_chars}",
-            f"Max. palabras:   {state.max_words}",
+            f"Max. palabras cortas: {state.max_words}",
             "",
             "Se conservara el archivo original.",
         ],
@@ -266,7 +347,7 @@ def draw(stdscr: curses.window, state: AppState, entries: list[tuple[str, Path, 
         stdscr,
         2,
         2,
-        f"Max chars: {state.max_chars}   Max palabras: {state.max_words}   h=ayuda   q=salir",
+        f"Max chars: {state.max_chars}   Max palabras cortas: {state.max_words}   h=ayuda   q=salir",
     )
     safe_addstr(stdscr, 3, 0, "-" * max(1, width - 1))
 
@@ -346,10 +427,10 @@ def run(stdscr: curses.window, start_dir: Path) -> None:
             state.message = f"Max. caracteres: {state.max_chars}"
         elif key == ord("w"):
             state.max_words = max(MIN_WORDS, state.max_words - 1)
-            state.message = f"Max. palabras: {state.max_words}"
+            state.message = f"Max. palabras cortas: {state.max_words}"
         elif key == ord("W"):
             state.max_words = min(MAX_WORDS, state.max_words + 1)
-            state.message = f"Max. palabras: {state.max_words}"
+            state.message = f"Max. palabras cortas: {state.max_words}"
         elif key in (10, 13, curses.KEY_ENTER):
             name, path, kind = entries[state.selected]
             if kind in ("parent", "dir"):

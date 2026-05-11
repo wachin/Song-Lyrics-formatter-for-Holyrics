@@ -11,7 +11,7 @@ separar secciones.
 
 - `Lyrics-formatter.py`: version GUI original con PyQt6.
 - `Lyrics-formatter_v2.py`: version GUI mejorada para bloques de Holyrics.
-- `lyrics_formatter_curses.py`: version de terminal con curses.
+- `lyrics_formatter_curses.py`: version de terminal con curses y la misma logica de formateo de la GUI.
 
 ## Caracteristicas principales
 
@@ -111,6 +111,10 @@ Tambien conserva comentarios `//`, pero no crea partes de 6 lineas para
 Holyrics.
 
 ## Version terminal
+
+La version de terminal usa la misma logica de formateo que la GUI: comentarios
+`//` con partes de maximo 6 lineas, frases originales agrupadas cuando caben y
+una sola linea vacia entre bloques.
 
 Para ejecutar la version de terminal:
 
